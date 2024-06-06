@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+    $basetexture "models/portals/portal1_renderfix.vtf"
+    $bumpmap "dev/bump_normal"
+
+    $phong 1
+    $phongboost 5.60
+    $phongexponent 23.20
+    $phongfresnelranges "[ 0.00 0.30 1.00 ]"
+    $phongtint "[ 0.00 0.26 1.00 ]"
+    $rimlight 1
+    $rimlightboost 0.00
+
+    $selfillum 1
+}

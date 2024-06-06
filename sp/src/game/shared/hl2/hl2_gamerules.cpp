@@ -273,6 +273,8 @@ void CHalfLife2Proxy::UpdateOnRemove()
 	BEGIN_SEND_TABLE( CHalfLife2Proxy, DT_HalfLife2Proxy )
 		SendPropDataTable( "hl2_gamerules_data", 0, &REFERENCE_SEND_TABLE( DT_HL2GameRules ), SendProxy_HL2GameRules )
 	END_SEND_TABLE()
+
+	ConVar sv_receive_fall_damage("sv_receive_fall_damage", "0", FCVAR_GAMEDLL);
 #endif
 
 ConVar  physcannon_mega_enabled( "physcannon_mega_enabled", "0", FCVAR_CHEAT | FCVAR_REPLICATED );
@@ -343,6 +345,10 @@ ConVar	sk_npc_num_shotgun_pellets( "sk_npc_num_shotgun_pellets","8", FCVAR_REPLI
 ConVar	sk_plr_dmg_rpg_round	( "sk_plr_dmg_rpg_round","0", FCVAR_REPLICATED);
 ConVar	sk_npc_dmg_rpg_round	( "sk_npc_dmg_rpg_round","0", FCVAR_REPLICATED);
 ConVar	sk_max_rpg_round		( "sk_max_rpg_round","0", FCVAR_REPLICATED);
+
+ConVar	sk_plr_dmg_fakeportalgun_prj("sk_plr_dmg_fakeportalgun_prj", "0", FCVAR_REPLICATED);
+ConVar	sk_npc_dmg_fakeportalgun_prj("sk_npc_dmg_fakeportalgun_prj", "0", FCVAR_REPLICATED);
+ConVar	sk_max_fakeportalgun_prj("sk_max_fakeportalgun_prj", "0", FCVAR_REPLICATED);
 
 ConVar	sk_plr_dmg_sniper_round	( "sk_plr_dmg_sniper_round","0", FCVAR_REPLICATED);	
 ConVar	sk_npc_dmg_sniper_round	( "sk_npc_dmg_sniper_round","0", FCVAR_REPLICATED);
@@ -1714,6 +1720,17 @@ ConVar  alyx_darkness_force( "alyx_darkness_force", "0", FCVAR_CHEAT | FCVAR_REP
 		m_flLastGrenadeDropTime = gpGlobals->curtime + sk_plr_grenade_drop_time.GetFloat();
 	}
 
+	//-----------------------------------------------------------------------------
+	// Purpose: Return fall damage based on convar setting
+	//-----------------------------------------------------------------------------
+	float CHalfLife2::FlPlayerFallDamage(CBasePlayer *pPlayer)
+	{
+		if (sv_receive_fall_damage.GetBool())
+			return BaseClass::FlPlayerFallDamage(pPlayer);
+		else
+			return 0.0f;
+	}
+
 #endif //} !CLIENT_DLL
 
 
@@ -2130,6 +2147,7 @@ CAmmoDef *GetAmmoDef()
 
 		def.AddAmmoType("Buckshot",			DMG_BULLET | DMG_BUCKSHOT,	TRACER_LINE,			"sk_plr_dmg_buckshot",		"sk_npc_dmg_buckshot",		"sk_max_buckshot",		BULLET_IMPULSE(400, 1200), 0 );
 		def.AddAmmoType("RPG_Round",		DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_rpg_round",		"sk_npc_dmg_rpg_round",		"sk_max_rpg_round",		0, 0 );
+		def.AddAmmoType("FakePortalGun_P",	DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_fakeportalgun_prj", "sk_npc_dmg_fakeportalgun_prj", "sk_max_fakeportalgun_prj", 0, 0);
 		def.AddAmmoType("SMG1_Grenade",		DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_smg1_grenade",	"sk_npc_dmg_smg1_grenade",	"sk_max_smg1_grenade",	0, 0 );
 		def.AddAmmoType("SniperRound",		DMG_BULLET | DMG_SNIPER,	TRACER_NONE,			"sk_plr_dmg_sniper_round",	"sk_npc_dmg_sniper_round",	"sk_max_sniper_round",	BULLET_IMPULSE(650, 6000), 0 );
 		def.AddAmmoType("SniperPenetratedRound", DMG_BULLET | DMG_SNIPER, TRACER_NONE,			"sk_dmg_sniper_penetrate_plr", "sk_dmg_sniper_penetrate_npc", "sk_max_sniper_round", BULLET_IMPULSE(150, 6000), 0 );
