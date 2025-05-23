@@ -70,6 +70,10 @@ extern ConVar autoaim_max_dist;
 extern ConVar player_squad_autosummon_enabled;
 #endif
 
+ConVar sv_rocket_jump_force_boost_x("sv_rocket_jump_force_boost_x", "1", FCVAR_GAMEDLL, "Percent by which rocket jump knockback is increased on x axis.");
+ConVar sv_rocket_jump_force_boost_y("sv_rocket_jump_force_boost_y", "1", FCVAR_GAMEDLL, "Percent by which rocket jump knockback is increased on y axis.");
+ConVar sv_rocket_jump_force_boost_z("sv_rocket_jump_force_boost_z", "250", FCVAR_GAMEDLL, "Percent by which rocket jump knockback is increased on z axis.");
+
 // Do not touch with without seeing me, please! (sjb)
 // For consistency's sake, enemy gunfire is traced against a scaled down
 // version of the player's hull, not the hitboxes for the player's model
@@ -115,6 +119,9 @@ ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "0", FCVAR_CHEAT );
 ConVar autoaim_unlock_target( "autoaim_unlock_target", "0.8666" );
 
 ConVar sv_stickysprint("sv_stickysprint", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX);
+
+ConVar sv_regeneration_wait_time("sv_regeneration_wait_time", "1.0", FCVAR_REPLICATED);
+ConVar sv_regeneration_enable("sv_regeneration_enable", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE);
 
 #ifdef MAPBASE
 ConVar player_autoswitch_enabled( "player_autoswitch_enabled", "1", FCVAR_NONE, "This convar was added by Mapbase to toggle whether players automatically switch to their ''best'' weapon upon picking up ammo for it after it was dry." );
@@ -1168,6 +1175,32 @@ void CHL2_Player::PostThink( void )
 		m_flAnimRenderYaw.Set( m_pPlayerAnimState->GetRenderAngles().y );
 	}
 #endif
+	
+	// Regenerate heath after 3 seconds
+	if (IsAlive() && GetHealth() < GetMaxHealth() && sv_regeneration_enable.GetBool())
+	{
+		// Color to overlay on the screen while the player is taking damage
+		color32 hurtScreenOverlay = { 64, 0, 0, 64 };
+
+		if (gpGlobals->curtime > m_flLastDamageTime + sv_regeneration_wait_time.GetFloat())
+		{
+			TakeHealth(1, DMG_GENERIC);
+			m_bIsRegenerating = true;
+
+			if (GetHealth() >= GetMaxHealth())
+			{
+				m_bIsRegenerating = false;
+			}
+		}
+		else
+		{
+			m_bIsRegenerating = false;
+			if (gpGlobals->curtime < m_flLastDamageTime + 1.0)
+			{
+				UTIL_ScreenFade(this, hurtScreenOverlay, 1.0f, 0.1f, FFADE_IN | FFADE_PURGE);
+			}
+		}
+	}
 }
 
 void CHL2_Player::StartAdmireGlovesAnimation( void )
@@ -3024,7 +3057,28 @@ int CHL2_Player::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 
 	// Call the base class implementation
-	return BaseClass::OnTakeDamage_Alive( info );
+	int ret = BaseClass::OnTakeDamage_Alive( info );
+
+	Vector vecDir = vec3_origin;
+	if (info.GetInflictor())
+	{
+		vecDir = info.GetInflictor()->WorldSpaceCenter() - Vector(0, 0, 10) - WorldSpaceCenter();
+		VectorNormalize(vecDir);
+	}
+
+	//apply some knockback boost for rocket jumping
+	if (info.GetInflictor() && (GetMoveType() == MOVETYPE_WALK) &&
+		(!info.GetAttacker()->IsSolidFlagSet(FSOLID_TRIGGER)) &&
+		info.GetWeapon() && FClassnameIs(info.GetWeapon(), "weapon_fakeportalgun"))
+	{
+		Vector force = vecDir;
+		force.x = vecDir.x * -sv_rocket_jump_force_boost_x.GetFloat();
+		force.y = vecDir.y * -sv_rocket_jump_force_boost_y.GetFloat();
+		force.z = vecDir.z * -sv_rocket_jump_force_boost_z.GetFloat();
+		ApplyAbsVelocityImpulse(force);
+	}
+
+	return ret;
 }
 
 //-----------------------------------------------------------------------------
@@ -3828,7 +3882,7 @@ void CHL2_Player::PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize )
 	
 	if ( bLimitMassAndSize == true )
 	{
-		if ( CBasePlayer::CanPickupObject( pObject, 35, 128 ) == false )
+		if ( CBasePlayer::CanPickupObject( pObject, 85, 128 ) == false )
 			 return;
 	}
 
