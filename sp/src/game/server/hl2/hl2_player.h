@@ -440,8 +440,6 @@ private:
 
 	float				m_flTimeNextLadderHint;	// Next time we're eligible to display a HUD hint about a ladder.
 	
-	bool				m_bIsRegenerating;		// Is the player currently regaining health
-
 	friend class CHL2GameMovement;
 
 #ifdef SP_ANIM_STATE

@@ -509,40 +509,6 @@ LINK_ENTITY_TO_CLASS( item_ml_grenade, CItem_RPG_Round );
 LINK_ENTITY_TO_CLASS( item_rpg_round, CItem_RPG_Round );
 
 // ========================================================================
-// Fake Portal Gun Projectile
-// ========================================================================
-class CItem_FakePortalGun_Projectile : public CItem
-{
-public:
-	DECLARE_CLASS(CItem_FakePortalGun_Projectile, CItem);
-
-	void Spawn(void)
-	{
-		Precache();
-		SetModel("models/weapons/w_missile_closed.mdl");
-		BaseClass::Spawn();
-	}
-	void Precache(void)
-	{
-		PrecacheModel("models/weapons/w_missile_closed.mdl");
-	}
-	bool MyTouch(CBasePlayer *pPlayer)
-	{
-		if (ITEM_GiveAmmo(pPlayer, SIZE_AMMO_FAKEPORTALGUN_PROJECTILE, "FakePortalGun_P"))
-		{
-			if (g_pGameRules->ItemShouldRespawn(this) == GR_ITEM_RESPAWN_NO)
-			{
-				UTIL_Remove(this);
-			}
-			return true;
-		}
-		return false;
-	}
-};
-LINK_ENTITY_TO_CLASS(item_fakeportalgun_box, CItem_FakePortalGun_Projectile);
-LINK_ENTITY_TO_CLASS(item_fakeportalgun_projectile, CItem_FakePortalGun_Projectile);
-
-// ========================================================================
 //	>> AR2_Grenade
 // ========================================================================
 class CItem_AR2_Grenade : public CItem

@@ -12,25 +12,12 @@
 
 struct dlight_t;
 
-#ifdef EZ
-enum flashlighttype
-{
-	FLASHLIGHT,
-	NVG,
-	MUZZLEFLASH,
-	HEADLAMP
-};
-#endif
 
 class CFlashlightEffect
 {
 public:
 
-#ifdef EZ
-	CFlashlightEffect( int nEntIndex = 0, flashlighttype type = FLASHLIGHT );
-#else
 	CFlashlightEffect(int nEntIndex = 0);
-#endif
 	virtual ~CFlashlightEffect();
 
 	virtual void UpdateLight(const Vector &vecPos, const Vector &vecDir, const Vector &vecRight, const Vector &vecUp, int nDistance);
@@ -41,9 +28,6 @@ public:
 	ClientShadowHandle_t GetFlashlightHandle( void ) { return m_FlashlightHandle; }
 	void SetFlashlightHandle( ClientShadowHandle_t Handle ) { m_FlashlightHandle = Handle;	}
 	
-#ifdef EZ
-	virtual bool IsNVG( void ) { return m_iFlashLightType == NVG; }
-#endif
 protected:
 
 	void LightOff();
@@ -63,10 +47,6 @@ protected:
 
 	// Texture for flashlight
 	CTextureReference m_FlashlightTexture;
-
-#ifdef EZ
-	flashlighttype m_iFlashLightType;
-#endif
 };
 
 class CHeadlightEffect : public CFlashlightEffect
@@ -79,19 +59,6 @@ public:
 	virtual void UpdateLight(const Vector &vecPos, const Vector &vecDir, const Vector &vecRight, const Vector &vecUp, int nDistance);
 };
 
-class CTurretLightEffect : public CFlashlightEffect
-{
-public:
 
-	CTurretLightEffect();
-	~CTurretLightEffect();
-
-	virtual void UpdateLight( const Vector &vecPos, const Vector &vecDir, const Vector &vecRight, const Vector &vecUp, int nDistance );
-
-	float	m_flBrightnessScale;
-	float	m_Color[3];
-	float	m_flFarZ;
-	float	m_flFOV;
-};
 
 #endif // FLASHLIGHTEFFECT_H

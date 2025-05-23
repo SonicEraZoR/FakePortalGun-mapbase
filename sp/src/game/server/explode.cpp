@@ -103,8 +103,6 @@ public:
 	{
 		// Default to invalid.
 		m_sFireballSprite = -1;
-
-		m_pWeapon = NULL;
 	};
 
 	void Precache( void );
@@ -136,7 +134,6 @@ public:
 	int m_iClassIgnore;
 	EHANDLE m_hEntityIgnore;
 
-	CBaseEntity *m_pWeapon;
 };
 
 LINK_ENTITY_TO_CLASS( env_explosion, CEnvExplosion );
@@ -358,8 +355,6 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 			info.SetDamageForce( Vector( m_flDamageForce, 0, 0 ) );
 		}
 
-		info.SetWeapon(m_pWeapon);
-
 		RadiusDamage( info, GetAbsOrigin(), iRadius, m_iClassIgnore, m_hEntityIgnore.Get() );
 	}
 
@@ -498,49 +493,6 @@ void ExplosionCreate( const Vector &center, const QAngle &angles,
 	}
 
 	ExplosionCreate( center, angles, pOwner, magnitude, radius, nFlags, flExplosionForce, NULL, iCustomDamageType, ignoredEntity, ignoredClass );
-}
-
-// Can pass a weapon into this one
-void ExplosionCreate(const Vector &center, const QAngle &angles, CBaseEntity *pWeapon,
-	CBaseEntity *pOwner, int magnitude, int radius, int nSpawnFlags,
-	float flExplosionForce, CBaseEntity *pInflictor, int iCustomDamageType, const EHANDLE *ignoredEntity, Class_T ignoredClass)
-{
-	char			buf[128];
-
-	CEnvExplosion *pExplosion = (CEnvExplosion*)CBaseEntity::Create("env_explosion", center, angles, pOwner);
-	Q_snprintf(buf, sizeof(buf), "%3d", magnitude);
-	const char *szKeyName = "iMagnitude";
-	char *szValue = buf;
-	pExplosion->KeyValue(szKeyName, szValue);
-
-	pExplosion->AddSpawnFlags(nSpawnFlags);
-
-	if (radius)
-	{
-		Q_snprintf(buf, sizeof(buf), "%d", radius);
-		pExplosion->KeyValue("iRadiusOverride", buf);
-	}
-
-	if (flExplosionForce != 0.0f)
-	{
-		Q_snprintf(buf, sizeof(buf), "%.3f", flExplosionForce);
-		pExplosion->KeyValue("DamageForce", buf);
-	}
-
-	variant_t emptyVariant;
-	pExplosion->m_nRenderMode = kRenderTransAdd;
-	pExplosion->SetOwnerEntity(pOwner);
-	pExplosion->Spawn();
-	pExplosion->m_hInflictor = pInflictor;
-	pExplosion->SetCustomDamageType(iCustomDamageType);
-	pExplosion->m_pWeapon = pWeapon;
-	if (ignoredEntity)
-	{
-		pExplosion->m_hEntityIgnore = *ignoredEntity;
-	}
-	pExplosion->m_iClassIgnore = ignoredClass;
-
-	pExplosion->AcceptInput("Explode", NULL, NULL, emptyVariant, 0);
 }
 
 //-----------------------------------------------------------------------------
