@@ -58,6 +58,22 @@ config.cfg
 
 # Unnecessary files
 *.lib
+*.exe
+*.pdb
+*.dll
+*.bsp
+*.raw
+*.phy
+*.cache
+*.pcf
+*.sav
+*.wav
+*.mp3
+*.hl1
+*.hl2
+*.hl3
+*.tga
+*.ain
 *.filters
 *.vpc_crc
 *.sentinel
@@ -91,3 +107,13 @@ sp/src/vgui2/*.pdb
 
 # Build support files
 sp/src/devtools/gcc9+support.o
+
+sp/game/*/voice_ban.dt
+sp/game/*/cfg/server_blacklist.txt
+sp/game/*/GameState.txt
+sp/game/*/stats.txt
+sp/game/*/ep1_gamestats.dat
+sp/src/utils/qc_eyes/Debug/QC_Eyes.res
+sp/src/utils/qc_eyes/Release/QC_Eyes.res
+*.vmt
+*.vtf
