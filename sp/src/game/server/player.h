@@ -414,6 +414,9 @@ public:
 	const Vector&			ScriptGetEyeUp() { static Vector vecUp; EyeVectors( NULL, NULL, &vecUp ); return vecUp; }
 
 	HSCRIPT					ScriptGetViewModel( int viewmodelindex );
+
+	HSCRIPT					ScriptGetUseEntity() { return ToHScript( GetUseEntity() ); }
+	HSCRIPT					ScriptGetHeldObject() { return ToHScript( GetHeldObject() ); }
 #endif
 
 	// View model prediction setup
@@ -607,6 +610,11 @@ public:
 	QAngle					AutoaimDeflection( Vector &vecSrc, autoaim_params_t &params );
 	virtual bool			ShouldAutoaim( void );
 	void					SetTargetInfo( Vector &vecSrc, float flDist );
+
+#ifdef MAPBASE
+	// Tries to figure out what the player is trying to aim at
+	CBaseEntity				*GetProbableAimTarget( const Vector &vecSrc, const Vector &vecDir );
+#endif
 
 	void					SetViewEntity( CBaseEntity *pEntity );
 	CBaseEntity				*GetViewEntity( void ) { return m_hViewEntity; }

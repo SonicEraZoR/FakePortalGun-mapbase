@@ -485,6 +485,8 @@ BEGIN_ENT_SCRIPTDESC_ROOT( C_BaseEntity, "Root class of all client-side entities
 	DEFINE_SCRIPTFUNC_NAMED( ScriptEntityToWorldTransform, "EntityToWorldTransform", "Get the entity's transform" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetPhysicsObject, "GetPhysicsObject", "Get the entity's physics object if it has one" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPhysicsInitNormal, "PhysicsInitNormal", "Initializes the entity's physics object with the specified solid type, solid flags, and whether to start asleep" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPhysicsDestroyObject, "PhysicsDestroyObject", "Destroys the entity's physics object" )
 
 	DEFINE_SCRIPTFUNC( GetWaterLevel, "Get current level of water submergence" )
 
@@ -501,6 +503,9 @@ BEGIN_ENT_SCRIPTDESC_ROOT( C_BaseEntity, "Root class of all client-side entities
 
 	DEFINE_SCRIPTFUNC_NAMED( GetScriptOwnerEntity, "GetOwner", "Gets this entity's owner" )
 	DEFINE_SCRIPTFUNC_NAMED( SetScriptOwnerEntity, "SetOwner", "Sets this entity's owner" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetGroundEntity, "GetGroundEntity", "Get the entity we're standing on." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetGroundEntity, "SetGroundEntity", "Set the entity we're standing on." )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetColorVector, "GetRenderColorVector", "Get the render color as a vector" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetColorR, "GetRenderColorR", "Get the render color's R value" )

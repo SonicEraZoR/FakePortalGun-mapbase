@@ -159,6 +159,10 @@ ConVar zombie_decaymax( "zombie_decaymax", "0.4" );
 
 ConVar zombie_ambushdist( "zombie_ambushdist", "16000" );
 
+#ifdef MAPBASE
+ConVar	zombie_no_flinch_during_unique_anim( "zombie_no_flinch_during_unique_anim", "1", FCVAR_NONE, "Prevents zombies from flinching during actbusies and scripted sequences." );
+#endif
+
 //=========================================================
 // For a couple of reasons, we keep a running count of how
 // many zombies in the world are angry at any given time.
@@ -207,6 +211,9 @@ BEGIN_DATADESC( CNPC_BaseZombie )
 	DEFINE_FIELD( m_fIsTorso, FIELD_BOOLEAN ),
 #ifdef MAPBASE
 	DEFINE_KEYFIELD( m_fIsHeadless, FIELD_BOOLEAN, "Headless" ),
+	DEFINE_KEYFIELD( m_flMeleeReach, FIELD_FLOAT, "MeleeReach" ),
+	DEFINE_KEYFIELD( m_flMaxDistToSwat, FIELD_FLOAT, "MaxDistToSwat" ),
+	DEFINE_KEYFIELD( m_iMaxObjMassToSwat, FIELD_INTEGER, "MaxObjMassToSwat" ),
 #else
 	DEFINE_FIELD( m_fIsHeadless, FIELD_BOOLEAN ),
 #endif
@@ -252,6 +259,12 @@ CNPC_BaseZombie::CNPC_BaseZombie()
 	// moan loop.
 	m_iMoanSound = g_numZombies;
 
+#ifdef MAPBASE
+	m_flMeleeReach = ZOMBIE_MELEE_REACH;
+	m_flMaxDistToSwat = ZOMBIE_PLAYER_MAX_SWAT_DIST;
+	m_iMaxObjMassToSwat = ZOMBIE_MAX_PHYSOBJ_MASS;
+#endif
+
 	g_numZombies++;
 }
 
@@ -291,7 +304,11 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 	float dist = VectorNormalize(vecDirToEnemy);
 	vecDirToEnemy.z = 0;
 
-	if( dist > ZOMBIE_PLAYER_MAX_SWAT_DIST )
+#ifndef MAPBASE
+	if (dist > ZOMBIE_PLAYER_MAX_SWAT_DIST)
+#else
+	if (dist > m_flMaxDistToSwat)
+#endif
 	{
 		// Player is too far away. Don't bother 
 		// trying to swat anything at them until
@@ -782,7 +799,7 @@ bool CNPC_BaseZombie::ShouldBecomeTorso( const CTakeDamageInfo &info, float flDa
 HeadcrabRelease_t CNPC_BaseZombie::ShouldReleaseHeadcrab( const CTakeDamageInfo &info, float flDamageThreshold )
 {
 #ifdef MAPBASE
-	if ( m_iHealth <= 0 && !m_fIsHeadless )
+	if ( m_iHealth <= 0 && !m_fIsHeadless && !HasSpawnFlags(SF_ZOMBIE_NO_HEADCRAB_SPAWN))
 #else
 	if ( m_iHealth <= 0 )
 #endif
@@ -1745,7 +1762,11 @@ void CNPC_BaseZombie::HandleAnimEvent( animevent_t *pEvent )
 
 		dmgInfo.SetDamagePosition( vecHeadCrabPosition );
 
+#ifdef MAPBASE
+		ReleaseHeadcrab( vecHeadCrabPosition, vVelocity *iSpeed, true, false, true );
+#else
 		ReleaseHeadcrab( EyePosition(), vVelocity * iSpeed, true, false, true );
+#endif
 
 		GuessDamageForce( &dmgInfo, vVelocity, vecHeadCrabPosition, 0.5f );
 		TakeDamage( dmgInfo );
@@ -1924,6 +1945,31 @@ void CNPC_BaseZombie::OnScheduleChange( void )
 	} 
 
 	BaseClass::OnScheduleChange();
+}
+
+
+//---------------------------------------------------------
+//---------------------------------------------------------
+
+bool CNPC_BaseZombie::CanFlinch( void )
+{
+	if (!BaseClass::CanFlinch())
+		return false;
+
+#ifdef MAPBASE
+	if (zombie_no_flinch_during_unique_anim.GetBool())
+	{
+		// Don't flinch if currently playing actbusy animation (navigating to or from one is fine)
+		if (m_ActBusyBehavior.IsInsideActBusy())
+			return false;
+
+		// Don't flinch if currently playing scripted sequence (navigating to or from one is fine)
+		if (m_NPCState == NPC_STATE_SCRIPT && (IsCurSchedule( SCHED_SCRIPTED_WAIT, false ) || IsCurSchedule( SCHED_SCRIPTED_FACE, false )))
+			return false;
+	}
+#endif
+
+	return true;
 }
 
 
@@ -2121,7 +2167,11 @@ void CNPC_BaseZombie::GatherConditions( void )
 		// between him and the object he's heading for already. 
 		if( gpGlobals->curtime >= m_flNextSwatScan && (m_hPhysicsEnt == NULL) )
 		{
+#ifdef MAPBASE
+			FindNearestPhysicsObject(m_iMaxObjMassToSwat);
+#else
 			FindNearestPhysicsObject( ZOMBIE_MAX_PHYSOBJ_MASS );
+#endif			
 			m_flNextSwatScan = gpGlobals->curtime + 2.0;
 		}
 	}
@@ -2435,6 +2485,20 @@ void CNPC_BaseZombie::RemoveHead( void )
 }
 
 
+//---------------------------------------------------------
+//---------------------------------------------------------
+void CNPC_BaseZombie::SetModel( const char *szModelName )
+{
+#ifdef MAPBASE
+	// Zombies setting the same model again is a problem when they should maintain their current sequence (e.g. during dynamic interactions)
+	if ( IsRunningDynamicInteraction() && GetModelIndex() != 0 && FStrEq( szModelName, STRING(GetModelName()) ) )
+		return;
+#endif
+
+	BaseClass::SetModel( szModelName );
+}
+
+
 bool CNPC_BaseZombie::ShouldPlayFootstepMoan( void )
 {
 	if( random->RandomInt( 1, zombie_stepfreq.GetInt() * s_iAngryZombies ) == 1 )
@@ -2450,9 +2514,15 @@ bool CNPC_BaseZombie::ShouldPlayFootstepMoan( void )
 #define CRAB_HULL_EXPAND	1.1f
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-bool CNPC_BaseZombie::HeadcrabFits( CBaseAnimating *pCrab )
+bool CNPC_BaseZombie::HeadcrabFits( CBaseAnimating *pCrab, const Vector *vecOrigin )
 {
-	Vector vecSpawnLoc = pCrab->GetAbsOrigin();
+	Vector vecSpawnLoc;
+#ifdef MAPBASE
+	if (vecOrigin)
+		vecSpawnLoc = *vecOrigin;
+	else
+#endif
+	vecSpawnLoc = pCrab->GetAbsOrigin();
 
 	CTraceFilterSimpleList traceFilter( COLLISION_GROUP_NONE );
 	traceFilter.AddEntityToIgnore( pCrab );
@@ -2535,7 +2605,12 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 				SetHeadcrabSpawnLocation( iCrabAttachment, pAnimatingGib );
 			}
 
+#ifdef MAPBASE
+			// Server ragdolls don't have a valid origin on spawn, so we have to use the origin originally passed
+			if( !HeadcrabFits( pAnimatingGib, m_bForceServerRagdoll ? &vecOrigin : NULL ) )
+#else
 			if( !HeadcrabFits(pAnimatingGib) )
+#endif
 			{
 				UTIL_Remove(pGib);
 				return;
@@ -2552,11 +2627,20 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 			
 			if( UTIL_ShouldShowBlood(BLOOD_COLOR_YELLOW) )
 			{
-				UTIL_BloodImpact( pGib->WorldSpaceCenter(), Vector(0,0,1), BLOOD_COLOR_YELLOW, 1 );
+				Vector vecGibCenter;
+#ifdef MAPBASE
+				// Server ragdolls don't have a valid origin on spawn, so we have to use the origin originally passed
+				if (m_bForceServerRagdoll)
+					vecGibCenter = vecOrigin;
+				else
+#endif
+				vecGibCenter = pGib->WorldSpaceCenter();
+
+				UTIL_BloodImpact( vecGibCenter, Vector(0,0,1), BLOOD_COLOR_YELLOW, 1 );
 
 				for ( int i = 0 ; i < 3 ; i++ )
 				{
-					Vector vecSpot = pGib->WorldSpaceCenter();
+					Vector vecSpot = vecGibCenter;
 					
 					vecSpot.x += random->RandomFloat( -8, 8 ); 
 					vecSpot.y += random->RandomFloat( -8, 8 ); 
@@ -2590,6 +2674,9 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 		// Inherit some misc. properties
 		pCrab->m_bForceServerRagdoll = m_bForceServerRagdoll;
 		pCrab->m_iViewHideFlags = m_iViewHideFlags;
+
+		// Add response context for companion response (more reliable than checking for post-death zombie entity)
+		pCrab->AddContext( "from_zombie", "1", 2.0f );
 #endif
 		
 		// make me the crab's owner to avoid collision issues

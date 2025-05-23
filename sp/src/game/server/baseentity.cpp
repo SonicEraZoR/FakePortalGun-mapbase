@@ -2312,6 +2312,8 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC_NAMED( ScriptEntityToWorldTransform, "EntityToWorldTransform", "Get the entity's transform" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetPhysicsObject, "GetPhysicsObject", "Get the entity's physics object if it has one" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPhysicsInitNormal, "PhysicsInitNormal", "Initializes the entity's physics object with the specified solid type, solid flags, and whether to start asleep" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPhysicsDestroyObject, "PhysicsDestroyObject", "Destroys the entity's physics object" )
 
 	DEFINE_SCRIPTFUNC( ApplyAbsVelocityImpulse, "" )
 	DEFINE_SCRIPTFUNC( ApplyLocalAngularVelocityImpulse, "" )
@@ -2378,6 +2380,9 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC( GetContextExpireTime, "Get a response context's expiration time" )
 	DEFINE_SCRIPTFUNC( GetContextCount, "Get the number of response contexts" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetContextIndex, "GetContextIndex", "Get a response context at a specific index in the form of a table" )
+		
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetGroundEntity, "GetGroundEntity", "Get the entity we're standing on." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetGroundEntity, "SetGroundEntity", "Set the entity we're standing on." )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptFollowEntity, "FollowEntity", "Begin following the specified entity. This makes this entity non-solid, parents it to the target entity, and teleports it to the specified entity's origin. The second parameter is whether or not to use bonemerging while following." )
 	DEFINE_SCRIPTFUNC( StopFollowingEntity, "Stops following an entity if we're following one." )
@@ -10297,8 +10302,9 @@ bool CBaseEntity::ScriptAddOutput( const char *pszOutputName, const char *pszTar
 const char *CBaseEntity::ScriptGetKeyValue( const char *pszKeyName )
 {
 	static char szValue[128];
-	GetKeyValue( pszKeyName, szValue, sizeof(szValue) );
-	return szValue;
+	if ( GetKeyValue( pszKeyName, szValue, sizeof(szValue) ) )
+		return szValue;
+	return NULL;
 }
 
 //-----------------------------------------------------------------------------

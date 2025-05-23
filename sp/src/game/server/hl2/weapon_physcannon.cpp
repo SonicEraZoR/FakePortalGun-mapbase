@@ -68,6 +68,10 @@ ConVar player_throwforce( "player_throwforce", "1000" );
 ConVar physcannon_dmg_glass( "physcannon_dmg_glass", "15" );
 ConVar physcannon_right_turrets( "physcannon_right_turrets", "0" );
 
+#ifdef MAPBASE
+ConVar sv_player_enable_propsprint("sv_player_enable_propsprint", "0", FCVAR_NONE, "If enabled, allows the player to sprint while holding a physics object" );
+ConVar sv_player_enable_gravgun_sprint("sv_player_enable_gravgun_sprint", "0", FCVAR_NONE, "Enables the player to sprint while holding a phys. object with the gravity gun" );
+#endif
 extern ConVar hl2_normspeed;
 extern ConVar hl2_walkspeed;
 
@@ -486,6 +490,9 @@ public:
 	float GetLoadWeight( void ) const { return m_flLoadWeight; }
 	void SetAngleAlignment( float alignAngleCosine ) { m_angleAlignment = alignAngleCosine; }
 	void SetIgnorePitch( bool bIgnore ) { m_bIgnoreRelativePitch = bIgnore; }
+#ifdef MAPBASE
+	void SetDontUseListMass( bool bDontUse ) { m_bDontUseListMass = bDontUse; }
+#endif
 	QAngle TransformAnglesToPlayerSpace( const QAngle &anglesIn, CBasePlayer *pPlayer );
 	QAngle TransformAnglesFromPlayerSpace( const QAngle &anglesIn, CBasePlayer *pPlayer );
 
@@ -526,6 +533,12 @@ private:
 
 	// NVNT player controlling this grab controller
 	CBasePlayer*	m_pControllingPlayer;
+
+#ifdef MAPBASE
+	// Prevents using the added mass of every part of the object
+	// (not saved due to only being used upon attach)
+	bool			m_bDontUseListMass;
+#endif
 
 	friend class CWeaponPhysCannon;
 };
@@ -577,6 +590,9 @@ CGrabController::CGrabController( void )
 	m_flDistanceOffset = 0;
 	// NVNT constructing m_pControllingPlayer to NULL
 	m_pControllingPlayer = NULL;
+#ifdef MAPBASE
+	m_bDontUseListMass = false;
+#endif
 }
 
 CGrabController::~CGrabController( void )
@@ -779,12 +795,18 @@ void CGrabController::AttachEntity( CBasePlayer *pPlayer, CBaseEntity *pEntity, 
 	{
 		float mass = pList[i]->GetMass();
 		pList[i]->GetDamping( NULL, &m_savedRotDamping[i] );
-		m_flLoadWeight += mass;
 		m_savedMass[i] = mass;
 
-		// reduce the mass to prevent the player from adding crazy amounts of energy to the system
-		pList[i]->SetMass( REDUCED_CARRY_MASS / flFactor );
-		pList[i]->SetDamping( NULL, &damping );
+#ifdef MAPBASE
+		if (!m_bDontUseListMass || pList[i] == pPhys)
+#endif
+		{
+			m_flLoadWeight += mass;
+
+			// reduce the mass to prevent the player from adding crazy amounts of energy to the system
+			pList[i]->SetMass( REDUCED_CARRY_MASS / flFactor );
+			pList[i]->SetDamping( NULL, &damping );
+		}
 	}
 
 	// NVNT setting m_pControllingPlayer to the player attached
@@ -1044,9 +1066,19 @@ void CPlayerPickupController::Init( CBasePlayer *pPlayer, CBaseEntity *pObject )
 	CHL2_Player *pOwner = (CHL2_Player *)ToBasePlayer( pPlayer );
 	if ( pOwner )
 	{
+#ifndef MAPBASE
 		pOwner->EnableSprint( false );
+#else
+		if ( sv_player_enable_propsprint.GetBool() == false )
+		{
+			pOwner->EnableSprint( false );
+		}
+		else
+		{
+			pOwner->EnableSprint( true );	
+		}
+#endif
 	}
-
 	// If the target is debris, convert it to non-debris
 	if ( pObject->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
 	{
@@ -1063,7 +1095,24 @@ void CPlayerPickupController::Init( CBasePlayer *pPlayer, CBaseEntity *pObject )
 	
 	Pickup_OnPhysGunPickup( pObject, m_pPlayer, PICKED_UP_BY_PLAYER );
 	
+#ifdef MAPBASE
+	bool bUseGrabPos = false;
+	Vector vecGrabPos;
+	if ( dynamic_cast<CRagdollProp*>( pObject ) )
+	{
+		m_grabController.SetDontUseListMass( true );
+
+		// Approximate where we're grabbing from
+		vecGrabPos = pPlayer->EyePosition() + (pPlayer->EyeDirection3D() * 16.0f);
+		bUseGrabPos = true;
+	}
+	else
+		m_grabController.SetDontUseListMass( false );
+
+	m_grabController.AttachEntity( pPlayer, pObject, pPhysics, false, vecGrabPos, bUseGrabPos );
+#else
 	m_grabController.AttachEntity( pPlayer, pObject, pPhysics, false, vec3_origin, false );
+#endif
 	// NVNT apply a downward force to simulate the mass of the held object.
 #if defined( WIN32 ) && !defined( _X360 )
 	HapticSetConstantForce(m_pPlayer,clamp(m_grabController.GetLoadWeight()*0.1,1,6)*Vector(0,-1,0));
@@ -1102,10 +1151,17 @@ void CPlayerPickupController::Shutdown( bool bThrown )
 	if ( m_pPlayer )
 	{
 		CHL2_Player *pOwner = (CHL2_Player *)ToBasePlayer( m_pPlayer );
+#ifndef MAPBASE
 		if ( pOwner )
 		{
 			pOwner->EnableSprint( true );
 		}
+#else
+		if ( pOwner && sv_player_enable_propsprint.GetBool() == false )
+		{
+			pOwner->EnableSprint( true );
+		}
+#endif
 
 		m_pPlayer->SetUseEntity( NULL );
 		if ( m_pPlayer->GetActiveWeapon() )
@@ -2497,6 +2553,7 @@ bool CWeaponPhysCannon::AttachObject( CBaseEntity *pObject, const Vector &vPosit
 		// NVNT set the players constant force to simulate holding mass
 		HapticSetConstantForce(pOwner,clamp(m_grabController.GetLoadWeight()*0.05,1,5)*Vector(0,-1,0));
 #endif
+#ifndef MAPBASE
 		pOwner->EnableSprint( false );
 
 		float	loadWeight = ( 1.0f - GetLoadPercentage() );
@@ -2504,6 +2561,22 @@ bool CWeaponPhysCannon::AttachObject( CBaseEntity *pObject, const Vector &vPosit
 
 		//Msg( "Load perc: %f -- Movement speed: %f/%f\n", loadWeight, maxSpeed, hl2_normspeed.GetFloat() );
 		pOwner->SetMaxSpeed( maxSpeed );
+#else
+		if ( sv_player_enable_gravgun_sprint.GetBool() == false )
+		{
+			pOwner->EnableSprint( false );
+
+			float	loadWeight = ( 1.0f - GetLoadPercentage() );
+			float	maxSpeed = hl2_walkspeed.GetFloat() + ( ( hl2_normspeed.GetFloat() - hl2_walkspeed.GetFloat() ) * loadWeight );
+
+			//Msg( "Load perc: %f -- Movement speed: %f/%f\n", loadWeight, maxSpeed, hl2_normspeed.GetFloat() );
+			pOwner->SetMaxSpeed( maxSpeed );
+		}
+		else 
+		{
+			pOwner->EnableSprint( true );
+		}
+#endif
 	}
 
 	// Don't drop again for a slight delay, in case they were pulling objects near them
@@ -2683,6 +2756,11 @@ CWeaponPhysCannon::FindObjectResult_t CWeaponPhysCannon::FindObject( void )
 	if ( mass < 50.0f )
 	{
 		pullDir *= (mass + 0.5) * (1/50.0f);
+	}
+
+	CPhysicsProp* pProp = dynamic_cast<CPhysicsProp*>(pEntity);
+	if (pProp) {
+		pProp->OnPhysGunPull( pOwner );
 	}
 
 	// Nudge it towards us
@@ -2950,9 +3028,17 @@ void CWeaponPhysCannon::DetachObject( bool playSound, bool wasLaunched )
 	CHL2_Player *pOwner = (CHL2_Player *)ToBasePlayer( GetOwner() );
 	if( pOwner != NULL )
 	{
+#ifndef MAPBASE
 		pOwner->EnableSprint( true );
 		pOwner->SetMaxSpeed( hl2_normspeed.GetFloat() );
 		
+#else
+		if (sv_player_enable_gravgun_sprint.GetBool() == false)
+		{
+			pOwner->EnableSprint( true );
+			pOwner->SetMaxSpeed( hl2_normspeed.GetFloat() );
+		}
+#endif		
 		if( wasLaunched )
 		{
 			pOwner->RumbleEffect( RUMBLE_357, 0, RUMBLE_FLAG_RESTART );

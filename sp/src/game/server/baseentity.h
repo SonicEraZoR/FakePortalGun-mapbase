@@ -606,6 +606,9 @@ public:
 
 	void ValidateEntityConnections();
 	void FireNamedOutput( const char *pszOutput, variant_t variant, CBaseEntity *pActivator, CBaseEntity *pCaller, float flDelay = 0.0f );
+#ifdef MAPBASE
+	virtual
+#endif
 	CBaseEntityOutput *FindNamedOutput( const char *pszOutput );
 #ifdef MAPBASE_VSCRIPT
 	void ScriptFireOutput( const char *pszOutput, HSCRIPT hActivator, HSCRIPT hCaller, const char *szValue, float flDelay );
@@ -864,6 +867,13 @@ public:
 
 	void		 SetAIWalkable( bool bBlocksLOS );
 	bool		 IsAIWalkable( void );
+
+#ifdef MAPBASE
+	// Handle a potentially complex command from a client.
+	// Returns true if the command was handled successfully.
+	virtual bool	HandleEntityCommand(CBasePlayer* pClient, KeyValues* pKeyValues) { return false; }
+#endif // MAPBASE
+
 private:
 	int SaveDataDescBlock( ISave &save, datamap_t *dmap );
 	int RestoreDataDescBlock( IRestore &restore, datamap_t *dmap );
@@ -1445,6 +1455,11 @@ public:
 	void					SetGroundEntity( CBaseEntity *ground );
 	CBaseEntity				*GetGroundEntity( void );
 	CBaseEntity				*GetGroundEntity( void ) const { return const_cast<CBaseEntity *>(this)->GetGroundEntity(); }
+	
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT ScriptGetGroundEntity();
+	void ScriptSetGroundEntity( HSCRIPT hGroundEnt );
+#endif
 
 	// Gets the velocity we impart to a player standing on us
 	virtual void			GetGroundVelocityToApply( Vector &vecGroundVel ) { vecGroundVel = vec3_origin; }
@@ -1575,7 +1590,7 @@ public:
 		float flVolume, soundlevel_t iSoundlevel, int iFlags = 0, int iPitch = PITCH_NORM,
 		const Vector *pOrigin = NULL, const Vector *pDirection = NULL, bool bUpdatePositions = true, float soundtime = 0.0f
 #ifdef MAPBASE
-		, int iSpecialDSP = 0, int iSpeakerIndex = 0 // Needed for env_microphone
+		, int iSpecialDSP = 0, int iSpeakerIndex = -1 // Needed for env_microphone
 #endif
 		);
 
@@ -2092,6 +2107,8 @@ public:
 	HSCRIPT ScriptEntityToWorldTransform( void );
 
 	HSCRIPT ScriptGetPhysicsObject( void );
+	void ScriptPhysicsInitNormal( int nSolidType, int nSolidFlags, bool createAsleep );
+	void ScriptPhysicsDestroyObject() { VPhysicsDestroyObject(); }
 
 	void ScriptSetParent(HSCRIPT hParent, const char *szAttachment);
 #endif
