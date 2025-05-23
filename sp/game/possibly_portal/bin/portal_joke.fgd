@@ -1,0 +1,68 @@
+///====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//
+// Purpose: Portal?????? game definition file (.fgd) 
+//
+///=============================================================================
+
+@include "halflife2_mb.fgd"
+
+///=============================================================================
+//
+// Logical Entities
+//
+///=============================================================================
+
+//@PointClass base(Parentname, Targetname, Angles) studio( "models/props_bts/rocket_sentry.mdl" ) = npc_rocket_turret: "Aims a rocket at a target."
+//[
+//	spawnflags(Flags) =
+//	[
+//		1:  "Disabled" : 0
+//	]
+//
+//	input Toggle(void) : "Toggles activity."
+//	input Enable(void) : "Enables activity."
+//	input Disable(void) : "Disables activity."
+//	input SetTarget(string) : "Sets the target for this turret to attack."
+//	input Destroy(void) : "Sets this turret to it's destroyed state."
+//
+//	output OnFoundTarget(void) 	: 	"Fired when the rocket turret finds an unobstructed target."
+//	output OnLostTarget(void) 	: 	"Fired when turret's target is blocked."
+//	output OnDeath(void)		:	"Fired after this turret finishes it's destroy think and begins it's death think."
+//]
+
+@PointClass base(Targetname, Angles, Studiomodel) studio( "models/props_bts/rocket_sentry.mdl" ) = npc_rocket_turret : "Aims a rocket at a target."
+[
+	spawnflags(Flags) = 
+	[
+		32 : "Autostart" : 1
+		64 : "Start Inactive" : 0
+		128 : "Never Retire" : 0
+		256 : "Out of Ammo" : 0
+	]
+
+	minhealthdmg(integer) : "Min req'd damage for hurting turret" : 0		
+
+	// Inputs
+	input Enable(void) : "If closed, open."
+	input Disable(void) : "If open, close."
+	input Toggle(void) : "Toggle - If open, close. If closed, open."
+
+	// Outputs
+	output OnDeploy(void) : "Turret is becoming active and dangerous."
+	output OnRetire(void) : "Turret is becoming inactive and harmless."
+	output OnTipped(void) : "Turret has been tipped over and is inactive."
+]
+
+@PointClass base(Weapon) studio("models/weapons/w_portalgun.mdl") sphere(fademindist) sphere(fademaxdist) = weapon_fakeportalgun : "Fake Portalgun"
+[
+	CanFirePortal1(choices)			: "Can Fire Portal 1" : 1 : "Can this portalgun create blue portals?"	=
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	CanFirePortal2(choices)			: "Can Fire Portal 2" : 1 : "Can this portalgun create red portals?"	=
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]

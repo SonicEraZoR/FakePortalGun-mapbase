@@ -50,16 +50,12 @@
 			game+mod+mod_write+default_write_path		|gameinfo_path|.
 			gamebin				|gameinfo_path|bin
 			
-			game+mod			|gameinfo_path|content/*
-			
 			// Get our shared mapbase files.
 			// They should be right next to this mod.
 			// Also, for Episodic Mapbase, get HL2 as well.
-			game+mod			|gameinfo_path|../mapbase_hl2
-			game+mod			|gameinfo_path|../mapbase_hl2/content/*
-			game+mod			|gameinfo_path|../mapbase_shared/shared_misc
-			gamebin				|gameinfo_path|../mapbase_shared/shared_misc/bin
-			game+mod			|gameinfo_path|../mapbase_shared/shared_content_v7_0.vpk
+            game+mod            |gameinfo_path|mapbase/episodic/*
+            game+mod            |gameinfo_path|mapbase/hl2/*
+            game+mod            |gameinfo_path|mapbase/shared/shared_content_v7_0.vpk
 
 			// We search VPK files before ordinary folders, because most files will be found in
 			// VPK and we can avoid making thousands of file system calls to attempt to open files
