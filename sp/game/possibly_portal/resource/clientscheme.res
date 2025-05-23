@@ -315,6 +315,46 @@ Scheme
 				"custom"	"1"
 			}
 		}
+		WeaponIconsRB
+		{
+			"1"
+			{
+				"name"		"RealBeta's Weapon Icons"
+				"tall"		"64"
+				"tall_hidef"	"58"
+				"weight"	"0"
+				"antialias" "1"
+				"additive"	"1"
+				"custom"	"1"
+			}
+		}
+		WeaponIconsSelectedRB
+		{
+			"1"
+			{
+				"name"		"RealBeta's Weapon Icons"
+				"tall"		"64"
+				"tall_hidef"	"58"
+				"weight"	"0"
+				"antialias" "1"
+				"blur"		"5"
+				"scanlines"	"2"
+				"additive"	"1"
+				"custom"	"1"
+			}
+		}
+		WeaponIconsSmallRB
+		{
+			"1"
+			{
+				"name"		"RealBeta's Weapon Icons"
+				"tall"		"32"
+				"weight"	"0"
+				"antialias" "1"
+				"additive"	"1"
+				"custom"	"1"
+			}
+		}
 		Crosshairs
 		{
 			"1"
@@ -632,13 +672,13 @@ Scheme
 		{
 			"1"
 			{
-				"name"  "HalfLife2"
-				"tall"			"32"
-				"tall_hidef"	"46"
+				"name"  "Trebuchet MS"
+				"tall"			"51"
+				"tall_hidef"	"72"
 				"weight" "0"
 				"additive" "0"
 				"antialias" "1"
-				"custom"	"1" [$OSX]
+				"blur" "2"
 			}
 		}
 		CreditsLogo
@@ -794,6 +834,7 @@ Scheme
 	{
 		"1"		"resource/HALFLIFE2.ttf"
 		"2"		"resource/HL2crosshairs.ttf"
+		"3"		"resource/RealBeta's Weapon Icons.ttf"
 	}
 
 }
