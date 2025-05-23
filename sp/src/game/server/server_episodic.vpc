@@ -6,7 +6,7 @@
 
 $Macro SRCDIR		"..\.."
 $Macro GAMENAME 	"episodic" [!$SOURCESDK]
-$Macro GAMENAME 	"mod_episodic" [$SOURCESDK]
+$Macro GAMENAME 	"possibly_portal" [$SOURCESDK]
 
 $Include "$SRCDIR\game\server\server_base.vpc"
 
@@ -205,6 +205,7 @@ $Project "Server (Episodic)"
 			$File	"hl2\npc_PoisonZombie.cpp"
 			$File	"hl2\npc_rollermine.cpp"
 			$File	"hl2\npc_rollermine.h"
+			$File	"hl2\npc_rocket_turret.cpp"
 			$File	"hl2\npc_scanner.cpp"
 			$File	"hl2\npc_scanner.h"
 			$File	"hl2\npc_stalker.cpp"
@@ -257,6 +258,8 @@ $Project "Server (Episodic)"
 			$File	"hl2\weapon_frag.cpp"
 			$File	"hl2\weapon_physcannon.cpp"
 			$File	"hl2\weapon_physcannon.h"
+			$File	"hl2\weapon_fakeportalgun.cpp"
+			$File	"hl2\weapon_fakeportalgun.h"
 			$File	"hl2\weapon_pistol.cpp"
 			$File	"hl2\weapon_rpg.cpp"
 			$File	"hl2\weapon_rpg.h"

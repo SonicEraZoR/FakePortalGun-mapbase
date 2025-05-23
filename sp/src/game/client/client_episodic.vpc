@@ -6,7 +6,7 @@
 
 $Macro SRCDIR		"..\.."
 $Macro GAMENAME 	"episodic" [!$SOURCESDK]
-$Macro GAMENAME 	"mod_episodic" [$SOURCESDK]
+$Macro GAMENAME 	"possibly_portal" [$SOURCESDK]
 
 $Include "$SRCDIR\game\client\client_base.vpc"
 
@@ -57,6 +57,8 @@ $Project "Client (Episodic)"
 			$File	"hl2\c_npc_combinegunship.cpp"
 			$File	"hl2\c_npc_manhack.cpp"
 			$File	"hl2\c_npc_rollermine.cpp"
+			$File	"hl2\c_npc_wilson.cpp"
+			$File	"hl2\c_npc_wilson.h"
 			$File	"hl2\c_plasma_beam_node.cpp"
 			$File	"hl2\c_prop_combine_ball.cpp"
 			$File	"hl2\c_prop_combine_ball.h"
