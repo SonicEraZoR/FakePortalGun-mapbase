@@ -143,8 +143,11 @@ public:
 	
 	CBaseEntity *GetMissile( void ) { return m_hMissile; }
 
-	float CanFirePortal1(void) { return m_bCanFirePortal1; }
-	float CanFirePortal2(void) { return m_bCanFirePortal2; }
+	bool CanFirePortal1(void) { return m_bCanFirePortal1; }
+	bool CanFirePortal2(void) { return m_bCanFirePortal2; }
+
+	void SetCanFirePortal1(bool can_fire) { m_bCanFirePortal1 = can_fire; }
+	void SetCanFirePortal2(bool can_fire) { m_bCanFirePortal2 = can_fire; }
 
 	DECLARE_ACTTABLE();
 	DECLARE_DATADESC();

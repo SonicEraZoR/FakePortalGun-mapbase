@@ -33,9 +33,6 @@
 
 #define	FAKEPORTALGUN_SPEED	750
 
-ConVar sv_can_fire_blue_portal("sv_can_fire_blue_portal", "1", FCVAR_GAMEDLL);
-ConVar sv_can_fire_orange_portal("sv_can_fire_orange_portal", "1", FCVAR_GAMEDLL);
-
 BEGIN_DATADESC( CFakePortalGunProjectile )
 	
 	DEFINE_FIELD( m_hOwner,					FIELD_EHANDLE ),
@@ -547,7 +544,7 @@ bool CWeaponFakePortalGun::HasAnyAmmo( void )
 //-----------------------------------------------------------------------------
 void CWeaponFakePortalGun::PrimaryAttack( void )
 {
-	if (!m_bCanFirePortal1 || !sv_can_fire_blue_portal.GetBool())
+	if (!m_bCanFirePortal1)
 		return;
 
 	// Can't be reloading
@@ -618,7 +615,7 @@ void CWeaponFakePortalGun::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CWeaponFakePortalGun::SecondaryAttack(void)
 {
-	if (!m_bCanFirePortal2 || !sv_can_fire_orange_portal.GetBool())
+	if (!m_bCanFirePortal2)
 		return;
 	
 	// Can't be reloading

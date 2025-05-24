@@ -31,6 +31,7 @@
 #include "vphysics/player_controller.h"
 #include "player_pickup.h"
 #include "weapon_physcannon.h"
+#include "weapon_fakeportalgun.h"
 #include "script_intro.h"
 #include "effect_dispatch_data.h"
 #include "te_effect_dispatch.h" 
@@ -3484,6 +3485,36 @@ bool CHL2_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		return true;
 	}
 #else
+
+	if (FClassnameIs(pWeapon, "weapon_fakeportalgun"))
+	{
+		CBaseCombatWeapon* player_owned_weapon = Weapon_OwnsThisType(pWeapon->GetClassname(), pWeapon->GetSubType());
+		if (player_owned_weapon)
+		{
+			CWeaponFakePortalGun* fakeportalgun_given = static_cast<CWeaponFakePortalGun*>(pWeapon);
+			CWeaponFakePortalGun* fakeportalgun_player_owned = static_cast<CWeaponFakePortalGun*>(player_owned_weapon);
+			bool took_fakeportalgun = false;
+
+			if (fakeportalgun_given->CanFirePortal1() && !fakeportalgun_player_owned->CanFirePortal1())
+			{
+				took_fakeportalgun = true;
+				fakeportalgun_player_owned->SetCanFirePortal1(true);
+			}
+
+			if (fakeportalgun_given->CanFirePortal2() && !fakeportalgun_player_owned->CanFirePortal2())
+			{
+				took_fakeportalgun = true;
+				fakeportalgun_player_owned->SetCanFirePortal2(true);
+			}
+
+			if (took_fakeportalgun)
+			{
+				EmitSound("Weapon_Portalgun.powerup");
+				UTIL_Remove(pWeapon);
+				return true;
+			}
+		}
+	}
 
 	return BaseClass::BumpWeapon( pWeapon );
 
