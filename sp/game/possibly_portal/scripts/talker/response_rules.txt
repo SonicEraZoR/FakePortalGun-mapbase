@@ -156,3 +156,6 @@
 //#include "talker/npc_barney_episodic.txt"
 #include "talker/nags_Alyx.txt"
 #include "talker/npc_alyx_vehicle.txt"
+
+// E:Z2
+#include "talker/arbeit_turret.txt"
