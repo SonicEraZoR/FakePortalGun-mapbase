@@ -1,0 +1,8 @@
+SDK_LightmappedGeneric
+{
+	"$basetexture" "signage/overlay_aperture_logo_worn"
+	"$translucent" 1
+	"$decal" 1
+	"$surfaceprop" "glass"
+	"%keywords" "portal"
+}
