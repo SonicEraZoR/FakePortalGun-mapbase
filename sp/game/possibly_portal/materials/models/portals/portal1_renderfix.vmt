@@ -1,4 +1,4 @@
-"VertexLitGeneric"
+SDK_VertexLitGeneric
 {
     $basetexture "models/portals/portal1_renderfix.vtf"
     $bumpmap "dev/bump_normal"

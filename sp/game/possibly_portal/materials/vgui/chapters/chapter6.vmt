@@ -1,5 +1,5 @@
 //"LightmappedGeneric"
-"UnlitGeneric"
+SDK_UnlitGeneric
 {
 	"$baseTexture" "vgui/chapters/chapter6"
 	"$vertexalpha" 1
