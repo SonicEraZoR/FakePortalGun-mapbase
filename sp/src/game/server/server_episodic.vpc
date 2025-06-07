@@ -302,5 +302,10 @@ $Project "Server (Episodic)"
 				$File	"hl2\weapon_flaregun.h"
 			}
 		}
+		
+		$Folder	"Possibly Portal"
+		{
+			$File	"possibly_portal\npc_security_camera.cpp"
+		}
 	}
 }

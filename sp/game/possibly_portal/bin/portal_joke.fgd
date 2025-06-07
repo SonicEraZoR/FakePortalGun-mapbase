@@ -117,3 +117,21 @@
 	
 	input EnableSilently(void) : "Enables the turret silently, not deploying immediately."
 ]
+
+@PointClass base(Targetname, Angles, Studiomodel) studio( "models/props/security_camera.mdl" ) = npc_security_camera : "Security Camera"
+[
+	spawnflags(Flags) = 
+	[
+		32 : "Autostart" : 1
+	]	
+
+	// Inputs
+	input Enable(void) : "If closed, open."
+	input Disable(void) : "If open, close."
+	input Toggle(void) : "Toggle - If open, close. If closed, open."
+	input Ragdoll(void) : "Disable and fall off the wall."
+
+	// Outputs
+	output OnDeploy(void) : "Camera is becoming active and dangerous."
+	output OnRetire(void) : "Camera is becoming inactive and harmless."
+]
