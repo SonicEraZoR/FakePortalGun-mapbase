@@ -1,6 +1,6 @@
 // Created by Crowbar 0.74
 
-$modelname "props\Security_Camera.mdl"
+$modelname "props\security_camera.mdl"
 
 $bodygroup "studio"
 {
@@ -22,6 +22,7 @@ $illumposition 0.741 -18.795 -3.385
 $cdmaterials "models\props\"
 
 $attachment "light" "UD_Rot1" -14.25 -5 16.3 rotate 0 -180 90
+$attachment "eyes" "UD_Rot1" -9.20 0.00 16.70 rotate -90 90 0
 $attachment "Wire1_A" "Root1" 1.5 -6.2 1.5 rotate 0 0 135
 $attachment "Wire2_A" "Root1" -2 -6.2 1.5 rotate 0 0 135
 $attachment "Wire1_B" "UD_Rot1" -4.6 -0.5 -9.5 rotate 0 0 -90
