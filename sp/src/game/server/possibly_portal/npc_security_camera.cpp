@@ -627,7 +627,7 @@ bool CNPC_SecurityCamera::UpdateFacing( void )
 	// Update pitch
 	float flDiff = AngleNormalize( UTIL_ApproachAngle(  vecGoalLocalAngles.x, 0.0, 0.1f * MaxYawSpeed() ) );
 	
-	SetPoseParameter( m_poseAim_Pitch, GetPoseParameter( m_poseAim_Pitch ) + ( flDiff / 1.5f ) );
+	SetPoseParameter( m_poseAim_Pitch, GetPoseParameter( m_poseAim_Pitch ) - ( flDiff / 1.5f ) );
 
 	if ( fabs( flDiff ) > 0.1f )
 	{
