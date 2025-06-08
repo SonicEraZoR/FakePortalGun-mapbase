@@ -375,7 +375,7 @@ void CNPC_SecurityCamera::Spawn( void )
 #endif
 	m_pEyeGlow = CSprite::SpriteCreate( SECURITY_CAMERA_GLOW_SPRITE, GetLocalOrigin(), false );
 	m_pEyeGlow->SetTransparency( kRenderTransAdd, 255, 0, 0, 128, kRenderFxNoDissipation );
-	m_pEyeGlow->SetAttachment( this, 2 );
+	m_pEyeGlow->SetAttachment(this, LookupAttachment("light"));
 #ifdef MAPBASE
 	}
 #endif
@@ -1066,7 +1066,7 @@ void CNPC_SecurityCamera::InputCreateSprite( inputdata_t &inputdata )
 
 	m_pEyeGlow = CSprite::SpriteCreate( SECURITY_CAMERA_GLOW_SPRITE, GetLocalOrigin(), false );
 	m_pEyeGlow->SetTransparency( kRenderTransAdd, 255, 0, 0, 128, kRenderFxNoDissipation );
-	m_pEyeGlow->SetAttachment( this, 2 );
+	m_pEyeGlow->SetAttachment(this, LookupAttachment("light"));
 
 	RemoveSpawnFlags(SF_SECURITY_CAMERA_NO_SPRITE);
 }
