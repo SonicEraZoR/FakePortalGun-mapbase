@@ -61,7 +61,7 @@ ConVar	g_debug_security_camera( "g_debug_security_camera", "0" );
 //Activities
 int ACT_SECURITY_CAMERA_OPEN;
 int ACT_SECURITY_CAMERA_CLOSE;
-int ACT_SECURITY_CAMERA_OPEN_IDLE;
+int ACT_SECURITY_CAMERA_IDLE;
 int ACT_SECURITY_CAMERA_CLOSED_IDLE;
 int ACT_SECURITY_CAMERA_FIRE;
 int ACT_SECURITY_CAMERA_DRYFIRE;
@@ -172,19 +172,15 @@ protected:
 	virtual const char *GetPingSound()		{ return "NPC_CeilingTurret.Ping"; }
 	virtual const char *GetDieSound()		{ return "NPC_CeilingTurret.Die"; }
 
-	virtual float		GetFireRate(bool bFightingPlayer = false)		{ return bFightingPlayer ? 0.5f : 0.1f; }
-
 	virtual void		SetIdleGoalAngles()		{ m_vecGoalAngles = GetAbsAngles(); }
 #endif
 	
 #ifdef MAPBASE
 	virtual bool	PreThink( turretState_e state );
-	void	DryFire( void );
 	const char *GetTracerType( void ) { return "AR2Tracer"; }
 #else
 	bool	PreThink( turretState_e state );
 #endif
-	void	Shoot( const Vector &vecSrc, const Vector &vecDirToEnemy );
 	void	SetEyeState( eyeState_t state );
 	void	Ping( void );	
 	void	Toggle( void );
@@ -210,7 +206,6 @@ protected:
 	bool	m_bBlinkState;
 	bool	m_bEnabled;		//Denotes whether the turret is able to deploy or not
 	
-	float	m_flShotTime;
 	float	m_flLastSight;
 	float	m_flPingTime;
 
@@ -236,7 +231,6 @@ BEGIN_DATADESC( CNPC_SecurityCamera )
 	DEFINE_FIELD( m_bActive,		FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bBlinkState,	FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bEnabled,		FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_flShotTime,		FIELD_TIME ),
 	DEFINE_FIELD( m_flLastSight,	FIELD_TIME ),
 	DEFINE_FIELD( m_flPingTime,		FIELD_TIME ),
 	DEFINE_FIELD( m_vecGoalAngles,	FIELD_VECTOR ),
@@ -284,7 +278,6 @@ CNPC_SecurityCamera::CNPC_SecurityCamera( void )
 	m_iMinHealthDmg		= 0;
 	m_bAutoStart		= false;
 	m_flPingTime		= 0;
-	m_flShotTime		= 0;
 	m_flLastSight		= 0;
 	m_bBlinkState		= false;
 	m_bEnabled			= false;
@@ -308,7 +301,7 @@ void CNPC_SecurityCamera::Precache( void )
 	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_OPEN );
 	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_CLOSE );
 	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_CLOSED_IDLE );
-	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_OPEN_IDLE );
+	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_IDLE );
 	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_FIRE );
 	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_DRYFIRE );
 
@@ -474,7 +467,7 @@ void CNPC_SecurityCamera::Retire( void )
 		//Set our visible state to dormant
 		SetEyeState( TURRET_EYE_DORMANT );
 
-		SetActivity( (Activity) ACT_SECURITY_CAMERA_OPEN_IDLE );
+		SetActivity( (Activity) ACT_SECURITY_CAMERA_IDLE );
 		
 		//If we're done moving to our desired facing, close up
 		if ( UpdateFacing() == false )
@@ -557,9 +550,7 @@ void CNPC_SecurityCamera::Deploy( void )
 	{
 		SetHeight( SECURITY_CAMERA_DEPLOY_HEIGHT );
 
-		SetActivity( (Activity) ACT_SECURITY_CAMERA_OPEN_IDLE );
-
-		m_flShotTime  = gpGlobals->curtime + 1.0f;
+		SetActivity( (Activity) ACT_SECURITY_CAMERA_IDLE );
 
 		m_flPlaybackRate = 0;
 		SetThink( &CNPC_SecurityCamera::SearchThink );
@@ -766,50 +757,8 @@ void CNPC_SecurityCamera::ActiveThink( void )
 
 		bEnemyVisible = false;
 	}
-
-	Vector vecMuzzle, vecMuzzleDir;
-	QAngle vecMuzzleAng;
 	
-	GetAttachment( "eyes", vecMuzzle, vecMuzzleAng );
-	AngleVectors( vecMuzzleAng, &vecMuzzleDir );
-	
-	if ( m_flShotTime < gpGlobals->curtime )
-	{
-		//Fire the gun
-		if ( DotProduct( vecDirToEnemy, vecMuzzleDir ) >= 0.9848 ) // 10 degree slop
-		{
-#ifdef MAPBASE
-			if ( m_spawnflags & SF_SECURITY_CAMERA_OUT_OF_AMMO )
-			{
-				ResetActivity();
-				SetActivity( (Activity) ACT_SECURITY_CAMERA_DRYFIRE );
-				DryFire();
-			}
-			else
-			{
-				ResetActivity();
-				SetActivity( (Activity) ACT_SECURITY_CAMERA_FIRE );
-				Shoot( vecMuzzle, vecMuzzleDir );
-			}
-#else
-			if ( m_spawnflags & SF_SECURITY_CAMERA_OUT_OF_AMMO )
-			{
-				SetActivity( (Activity) ACT_SECURITY_CAMERA_DRYFIRE );
-			}
-			else
-			{
-				SetActivity( (Activity) ACT_SECURITY_CAMERA_FIRE );
-			}
-			
-			//Fire the weapon
-			Shoot( vecMuzzle, vecMuzzleDir );
-#endif
-		} 
-	}
-	else
-	{
-		SetActivity( (Activity) ACT_SECURITY_CAMERA_OPEN_IDLE );
-	}
+	SetActivity( (Activity) ACT_SECURITY_CAMERA_IDLE );
 
 	//If we can see our enemy, face it
 	if ( bEnemyVisible )
@@ -833,7 +782,7 @@ void CNPC_SecurityCamera::SearchThink( void )
 
 	SetNextThink( gpGlobals->curtime + 0.05f );
 
-	SetActivity( (Activity) ACT_SECURITY_CAMERA_OPEN_IDLE );
+	SetActivity( (Activity) ACT_SECURITY_CAMERA_IDLE );
 
 	//If our enemy has died, pick a new enemy
 	if ( ( GetEnemy() != NULL ) && ( GetEnemy()->IsAlive() == false ) )
@@ -855,20 +804,6 @@ void CNPC_SecurityCamera::SearchThink( void )
 	//If we've found a target, spin up the barrel and start to attack
 	if ( GetEnemy() != NULL )
 	{
-#ifdef MAPBASE
-		m_flShotTime = gpGlobals->curtime + GetFireRate( GetEnemy()->IsPlayer() );
-#else
-		//Give players a grace period
-		if ( GetEnemy()->IsPlayer() )
-		{
-			m_flShotTime  = gpGlobals->curtime + 0.5f;
-		}
-		else
-		{
-			m_flShotTime  = gpGlobals->curtime + 0.1f;
-		}
-#endif
-
 		m_flLastSight = 0;
 		SetThink( &CNPC_SecurityCamera::ActiveThink );
 		SetEyeState( TURRET_EYE_SEE_TARGET );
@@ -936,126 +871,6 @@ void CNPC_SecurityCamera::AutoSearchThink( void )
 #endif
 	}
 }
-
-#ifdef MAPBASE
-//-----------------------------------------------------------------------------
-// I decided to move dry firing to its own function instead of keeping it in Shoot, similar to npc_turret_floor
-//-----------------------------------------------------------------------------
-void CNPC_SecurityCamera::DryFire( void )
-{
-	EmitSound( "NPC_FloorTurret.DryFire");
-	EmitSound( GetActiveSound() );
-
-  	if ( RandomFloat( 0, 1 ) > 0.7 )
-	{
-		m_flShotTime = gpGlobals->curtime + random->RandomFloat( 0.5, 1.5 );
-	}
-	else
-	{
-		m_flShotTime = gpGlobals->curtime;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Fire!
-//-----------------------------------------------------------------------------
-void CNPC_SecurityCamera::Shoot( const Vector &vecSrc, const Vector &vecDirToEnemy )
-{
-	FireBulletsInfo_t info;
-
-	if ( GetEnemy() != NULL )
-	{
-		Vector vecDir = GetActualShootTrajectory( vecSrc );
-
-		info.m_vecSrc = vecSrc;
-		info.m_vecDirShooting = vecDir;
-		info.m_iTracerFreq = 1;
-		info.m_iShots = 1;
-		info.m_pAttacker = this;
-		info.m_vecSpread = VECTOR_CONE_PRECALCULATED;
-		info.m_flDistance = MAX_COORD_RANGE;
-		info.m_iAmmoType = m_iAmmoType;
-	}
-	else
-	{
-		// Just shoot where you're facing!
-		
-		info.m_vecSrc = vecSrc;
-		info.m_vecDirShooting = vecDirToEnemy;
-		info.m_iTracerFreq = 1;
-		info.m_iShots = 1;
-		info.m_pAttacker = this;
-		info.m_vecSpread = GetAttackSpread( NULL, NULL );
-		info.m_flDistance = MAX_COORD_RANGE;
-		info.m_iAmmoType = m_iAmmoType;
-	}
-
-	FireBullets( info );
-#ifdef MAPBASE
-	EmitSound( GetShootSound() );
-#else
-	EmitSound( "NPC_CeilingTurret.ShotSounds" );
-#endif
-	DoMuzzleFlash();
-}
-#else
-//-----------------------------------------------------------------------------
-// Purpose: Fire!
-//-----------------------------------------------------------------------------
-void CNPC_SecurityCamera::Shoot( const Vector &vecSrc, const Vector &vecDirToEnemy )
-{
-	if ( m_spawnflags & SF_SECURITY_CAMERA_OUT_OF_AMMO )
-	{
-		EmitSound( "NPC_FloorTurret.DryFire");
-		EmitSound( "NPC_CeilingTurret.Activate" );
-
-  		if ( RandomFloat( 0, 1 ) > 0.7 )
-		{
-			m_flShotTime = gpGlobals->curtime + random->RandomFloat( 0.5, 1.5 );
-		}
-		else
-		{
-			m_flShotTime = gpGlobals->curtime;
-		}
-		return;
-	}
-
-	FireBulletsInfo_t info;
-
-	if ( GetEnemy() != NULL )
-	{
-		Vector vecDir = GetActualShootTrajectory( vecSrc );
-
-		info.m_vecSrc = vecSrc;
-		info.m_vecDirShooting = vecDir;
-		info.m_iTracerFreq = 1;
-		info.m_iShots = 1;
-		info.m_pAttacker = this;
-		info.m_vecSpread = VECTOR_CONE_PRECALCULATED;
-		info.m_flDistance = MAX_COORD_RANGE;
-		info.m_iAmmoType = m_iAmmoType;
-	}
-	else
-	{
-		// Just shoot where you're facing!
-		Vector vecMuzzle, vecMuzzleDir;
-		QAngle vecMuzzleAng;
-		
-		info.m_vecSrc = vecSrc;
-		info.m_vecDirShooting = vecDirToEnemy;
-		info.m_iTracerFreq = 1;
-		info.m_iShots = 1;
-		info.m_pAttacker = this;
-		info.m_vecSpread = GetAttackSpread( NULL, NULL );
-		info.m_flDistance = MAX_COORD_RANGE;
-		info.m_iAmmoType = m_iAmmoType;
-	}
-
-	FireBullets( info );
-	EmitSound( "NPC_CeilingTurret.ShotSounds" );
-	DoMuzzleFlash();
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Allows a generic think function before the others are called
