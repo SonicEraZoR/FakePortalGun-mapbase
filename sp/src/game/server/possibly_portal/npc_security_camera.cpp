@@ -150,7 +150,11 @@ public:
 
 	Vector	EyePosition( void )
 	{
-		return GetAbsOrigin() + EyeOffset(GetActivity());
+		Vector vEyeVector;
+		if (GetAttachment(LookupAttachment("eyes"), vEyeVector))
+			return vEyeVector;
+		else
+			return GetAbsOrigin() + EyeOffset(GetActivity());
 	}
 
 	Vector	GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget ) 
