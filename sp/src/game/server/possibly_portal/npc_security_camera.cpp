@@ -131,13 +131,7 @@ public:
 
 	virtual bool CanBeAnEnemyOf( CBaseEntity *pEnemy );
 
-	Class_T	Classify( void ) 
-	{
-		if( m_bEnabled ) 
-			return CLASS_COMBINE;
-
-		return CLASS_NONE;
-	}
+	Class_T Classify() { return (m_bEnabled) ? CLASS_MILITARY : CLASS_NONE; }
 	
 	bool	FVisible( CBaseEntity *pEntity, int traceMask = MASK_BLOCKLOS, CBaseEntity **ppBlocker = NULL );
 
