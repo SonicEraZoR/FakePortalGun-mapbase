@@ -59,12 +59,7 @@ ConVar	g_debug_security_camera( "g_debug_security_camera", "0" );
 #define	SECURITY_CAMERA_DEPLOY_HEIGHT	64
 
 //Activities
-int ACT_SECURITY_CAMERA_OPEN;
-int ACT_SECURITY_CAMERA_CLOSE;
 int ACT_SECURITY_CAMERA_IDLE;
-int ACT_SECURITY_CAMERA_CLOSED_IDLE;
-int ACT_SECURITY_CAMERA_FIRE;
-int ACT_SECURITY_CAMERA_DRYFIRE;
 
 //Turret states
 enum turretState_e
@@ -157,14 +152,7 @@ protected:
 #ifdef MAPBASE
 	virtual const char *GetTurretModel() { return "models/props/security_camera.mdl"; }
 
-	virtual const char *GetRetireSound()	{ return "NPC_CeilingTurret.Retire"; }
-	virtual const char *GetDeploySound()	{ return "NPC_CeilingTurret.Deploy"; }
-	virtual const char *GetMoveSound()		{ return "NPC_CeilingTurret.Move"; }
-	virtual const char *GetActiveSound()	{ return "NPC_CeilingTurret.Active"; }
-	virtual const char *GetAlertSound()		{ return "NPC_CeilingTurret.Alert"; }
-	virtual const char *GetShootSound()		{ return "NPC_CeilingTurret.ShotSounds"; }
-	virtual const char *GetPingSound()		{ return "NPC_CeilingTurret.Ping"; }
-	virtual const char *GetDieSound()		{ return "NPC_CeilingTurret.Die"; }
+	virtual const char *GetMoveSound()		{ return "Portalgun.pedestal_rotate_loop"; }
 
 	virtual void		SetIdleGoalAngles()		{ m_vecGoalAngles = GetAbsAngles(); }
 #endif
@@ -292,34 +280,14 @@ void CNPC_SecurityCamera::Precache( void )
 	PrecacheModel( SECURITY_CAMERA_GLOW_SPRITE );
 
 	// Activities
-	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_OPEN );
-	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_CLOSE );
-	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_CLOSED_IDLE );
 	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_IDLE );
-	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_FIRE );
-	ADD_CUSTOM_ACTIVITY( CNPC_SecurityCamera, ACT_SECURITY_CAMERA_DRYFIRE );
 
 #ifdef MAPBASE
-	PrecacheScriptSound( GetRetireSound() );
-	PrecacheScriptSound( GetDeploySound() );
 	PrecacheScriptSound( GetMoveSound() );
-	PrecacheScriptSound( GetActiveSound() );
-	PrecacheScriptSound( GetAlertSound() );
-	PrecacheScriptSound( GetShootSound() );
-	PrecacheScriptSound( GetPingSound() );
-	PrecacheScriptSound( GetDieSound() );
 #else
-	PrecacheScriptSound( "NPC_CeilingTurret.Retire" );
-	PrecacheScriptSound( "NPC_CeilingTurret.Deploy" );
-	PrecacheScriptSound( "NPC_CeilingTurret.Move" );
-	PrecacheScriptSound( "NPC_CeilingTurret.Active" );
-	PrecacheScriptSound( "NPC_CeilingTurret.Alert" );
-	PrecacheScriptSound( "NPC_CeilingTurret.ShotSounds" );
-	PrecacheScriptSound( "NPC_CeilingTurret.Ping" );
-	PrecacheScriptSound( "NPC_CeilingTurret.Die" );
+	PrecacheScriptSound( "Portalgun.pedestal_rotate_loop" );
 #endif
 
-	PrecacheScriptSound( "NPC_FloorTurret.DryFire" );
 	
 	BaseClass::Precache();
 }
@@ -382,7 +350,7 @@ void CNPC_SecurityCamera::Spawn( void )
 	if ( m_bAutoStart && m_bEnabled )
 	{
 		SetThink( &CNPC_SecurityCamera::AutoSearchThink );
-		SetEyeState( TURRET_EYE_DORMANT );
+		SetEyeState(TURRET_EYE_SEE_TARGET);
 	}
 	else
 	{
@@ -427,12 +395,6 @@ int CNPC_SecurityCamera::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		ExplosionCreate( GetAbsOrigin(), GetLocalAngles(), this, 100, 100, false );
 		SetThink( &CNPC_SecurityCamera::DeathThink );
 
-#ifdef MAPBASE
-		StopSound( GetAlertSound() );
-#else
-		StopSound( "NPC_CeilingTurret.Alert" );
-#endif
-
 		m_OnDamaged.FireOutput( info.GetInflictor(), this );
 
 		SetNextThink( gpGlobals->curtime + 0.1f );
@@ -456,7 +418,7 @@ void CNPC_SecurityCamera::Retire( void )
 	SetNextThink( gpGlobals->curtime );
 
 	//Set ourselves to close
-	if ( GetActivity() != ACT_SECURITY_CAMERA_CLOSE )
+	if (GetActivity() != ACT_SECURITY_CAMERA_IDLE)
 	{
 		//Set our visible state to dormant
 		SetEyeState( TURRET_EYE_DORMANT );
@@ -466,12 +428,7 @@ void CNPC_SecurityCamera::Retire( void )
 		//If we're done moving to our desired facing, close up
 		if ( UpdateFacing() == false )
 		{
-			SetActivity( (Activity) ACT_SECURITY_CAMERA_CLOSE );
-#ifdef MAPBASE
-			EmitSound( GetRetireSound() );
-#else
-			EmitSound( "NPC_CeilingTurret.Retire" );
-#endif
+			SetActivity((Activity)ACT_SECURITY_CAMERA_IDLE);
 
 			//Notify of the retraction
 			m_OnRetire.FireOutput( NULL, this );
@@ -484,7 +441,7 @@ void CNPC_SecurityCamera::Retire( void )
 		m_bActive		= false;
 		m_flLastSight	= 0;
 
-		SetActivity( (Activity) ACT_SECURITY_CAMERA_CLOSED_IDLE );
+		SetActivity((Activity)ACT_SECURITY_CAMERA_IDLE);
 
 		//Go back to auto searching
 		if ( m_bAutoStart )
@@ -521,15 +478,10 @@ void CNPC_SecurityCamera::Deploy( void )
 	SetEyeState( TURRET_EYE_SEE_TARGET );
 
 	//Open if we're not already
-	if ( GetActivity() != ACT_SECURITY_CAMERA_OPEN )
+	if (GetActivity() != ACT_SECURITY_CAMERA_IDLE)
 	{
 		m_bActive = true;
-		SetActivity( (Activity) ACT_SECURITY_CAMERA_OPEN );
-#ifdef MAPBASE
-		EmitSound( GetDeploySound() );
-#else
-		EmitSound( "NPC_CeilingTurret.Deploy" );
-#endif
+		SetActivity((Activity)ACT_SECURITY_CAMERA_IDLE);
 
 		//Notify we're deploying
 #ifdef MAPBASE
@@ -548,12 +500,6 @@ void CNPC_SecurityCamera::Deploy( void )
 
 		m_flPlaybackRate = 0;
 		SetThink( &CNPC_SecurityCamera::SearchThink );
-
-#ifdef MAPBASE
-		EmitSound( GetMoveSound() );
-#else
-		EmitSound( "NPC_CeilingTurret.Move" );
-#endif
 	}
 
 	SetLastSightTime();
@@ -563,14 +509,7 @@ void CNPC_SecurityCamera::Deploy( void )
 //-----------------------------------------------------------------------------
 void CNPC_SecurityCamera::SetLastSightTime()
 {
-	if( HasSpawnFlags( SF_SECURITY_CAMERA_NEVERRETIRE ) )
-	{
-		m_flLastSight = FLT_MAX;
-	}
-	else
-	{
-		m_flLastSight = gpGlobals->curtime + SECURITY_CAMERA_MAX_WAIT;	
-	}
+	m_flLastSight = FLT_MAX;
 }
 
 //-----------------------------------------------------------------------------
@@ -578,8 +517,7 @@ void CNPC_SecurityCamera::SetLastSightTime()
 //-----------------------------------------------------------------------------
 float CNPC_SecurityCamera::MaxYawSpeed( void )
 {
-	//TODO: Scale by difficulty?
-	return 360.0f;
+	return 130.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -762,7 +700,18 @@ void CNPC_SecurityCamera::ActiveThink( void )
 	}
 
 	//Turn to face
-	UpdateFacing();
+	if (UpdateFacing())
+	{
+#ifdef MAPBASE
+		EmitSound(GetMoveSound());
+#else
+		EmitSound("Portalgun.pedestal_rotate_loop");
+#endif
+	}
+	else
+	{
+		StopLoopingSounds();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -773,6 +722,8 @@ void CNPC_SecurityCamera::SearchThink( void )
 	//Allow descended classes a chance to do something before the think function
 	if ( PreThink( TURRET_SEARCHING ) )
 		return;
+
+	StopLoopingSounds();
 
 	SetNextThink( gpGlobals->curtime + 0.05f );
 
@@ -803,30 +754,8 @@ void CNPC_SecurityCamera::SearchThink( void )
 		SetEyeState( TURRET_EYE_SEE_TARGET );
 
 		SpinUp();
-#ifdef MAPBASE
-		EmitSound( GetActiveSound() );
-#else
-		EmitSound( "NPC_CeilingTurret.Active" );
-#endif
 		return;
 	}
-
-	//Are we out of time and need to retract?
- 	if ( gpGlobals->curtime > m_flLastSight )
-	{
-		//Before we retrace, make sure that we are spun down.
-		m_flLastSight = 0;
-		SetThink( &CNPC_SecurityCamera::Retire );
-		return;
-	}
-	
-	//Display that we're scanning
-	m_vecGoalAngles.x = 15.0f;
-	m_vecGoalAngles.y = GetAbsAngles().y + ( sin( gpGlobals->curtime * 2.0f ) * 45.0f );
-
-	//Turn and ping
-	UpdateFacing();
-	Ping();
 }
 
 //-----------------------------------------------------------------------------
@@ -858,11 +787,6 @@ void CNPC_SecurityCamera::AutoSearchThink( void )
 	if ( GetEnemy() != NULL )
 	{
 		SetThink( &CNPC_SecurityCamera::Deploy );
-#ifdef MAPBASE
-		EmitSound( GetAlertSound() );
-#else
-		EmitSound( "NPC_CeilingTurret.Alert" );
-#endif
 	}
 }
 
@@ -950,13 +874,6 @@ void CNPC_SecurityCamera::Ping( void )
 	//See if it's time to ping again
 	if ( m_flPingTime > gpGlobals->curtime )
 		return;
-
-	//Ping!
-#ifdef MAPBASE
-	EmitSound( GetPingSound() );
-#else
-	EmitSound( "NPC_CeilingTurret.Ping" );
-#endif
 
 	SetEyeState( TURRET_EYE_SEEKING_TARGET );
 
@@ -1119,13 +1036,7 @@ void CNPC_SecurityCamera::DeathThink( void )
 		StopLoopingSounds();
 #endif
 
-#ifdef MAPBASE
-		EmitSound( GetDieSound() );
-#else
-		EmitSound( "NPC_CeilingTurret.Die" );
-#endif
-
-		SetActivity( (Activity) ACT_SECURITY_CAMERA_CLOSE );
+		SetActivity((Activity)ACT_SECURITY_CAMERA_IDLE);
 	}
 
 	// lots of smoke
