@@ -137,18 +137,14 @@ public:
 
 	Vector	EyeOffset( Activity nActivity ) 
 	{
-		Vector vecEyeOffset(0,0,-64);
-		GetEyePosition( GetModelPtr(), vecEyeOffset );
-		return vecEyeOffset;
+		Vector vecForward;
+		GetVectors(&vecForward, 0, 0);
+		return vecForward * 10.0f;
 	}
 
 	Vector	EyePosition( void )
 	{
-		Vector vEyeVector;
-		if (GetAttachment(LookupAttachment("eyes"), vEyeVector))
-			return vEyeVector;
-		else
-			return GetAbsOrigin() + EyeOffset(GetActivity());
+		return GetAbsOrigin() + EyeOffset(GetActivity());
 	}
 
 	Vector	GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget ) 
