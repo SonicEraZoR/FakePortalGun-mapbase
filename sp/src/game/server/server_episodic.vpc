@@ -14,12 +14,12 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\episodic;.\hl2;.\episodic"
-		$PreprocessorDefinitions		"$BASE;HL2_DLL;HL2_EPISODIC;USES_SAVERESTORE"
+		$AdditionalIncludeDirectories	".\possibly_portal;$BASE;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\episodic;.\hl2;.\episodic"
+		$PreprocessorDefinitions		"$BASE;HL2_DLL;HL2_EPISODIC;USES_SAVERESTORE;PORTAL_JOKE"
 	}
 }
 
-$Project "Server (Episodic)"
+$Project "Server (Possibly Portal)"
 {
 	$Folder	"Source Files"
 	{
