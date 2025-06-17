@@ -57,8 +57,6 @@ $Project "Client (Episodic)"
 			$File	"hl2\c_npc_combinegunship.cpp"
 			$File	"hl2\c_npc_manhack.cpp"
 			$File	"hl2\c_npc_rollermine.cpp"
-			$File	"hl2\c_npc_wilson.cpp"
-			$File	"hl2\c_npc_wilson.h"
 			$File	"hl2\c_plasma_beam_node.cpp"
 			$File	"hl2\c_prop_combine_ball.cpp"
 			$File	"hl2\c_prop_combine_ball.h"
@@ -79,7 +77,6 @@ $Project "Client (Episodic)"
 			$File	"episodic\c_vort_charge_token.cpp"
 			$File	"hl2\c_weapon__stubs_hl2.cpp"
 			$File	"hl2\c_weapon_crossbow.cpp"
-			$File	"hl2\c_weapon_fakeportalgun.cpp"
 			$File	"episodic\c_weapon_hopwire.cpp"
 			$File	"hl2\c_weapon_physcannon.cpp"
 			$File	"hl2\c_weapon_stunstick.cpp" [!$MAPBASE] // See client_mapbase.vpc
@@ -129,6 +126,13 @@ $Project "Client (Episodic)"
 			$File	"$SRCDIR\game\shared\hl2\survival_gamerules.cpp"
 			$File	"hl2\vgui_rootpanel_hl2.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
+		}
+		
+		$Folder	"Possibly Portal"
+		{
+			$File	"possibly_portal\c_weapon_fakeportalgun.cpp"
+			$File	"possibly_portal\c_npc_wilson.cpp"
+			$File	"possibly_portal\c_npc_wilson.h"
 		}
 	}
 	
