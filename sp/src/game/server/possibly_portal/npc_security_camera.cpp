@@ -369,40 +369,7 @@ void CNPC_SecurityCamera::Spawn( void )
 //-----------------------------------------------------------------------------
 int CNPC_SecurityCamera::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 {
-	if ( !m_takedamage )
-		return 0;
-
-	CTakeDamageInfo info = inputInfo;
-
-	if ( m_bActive == false )
-		info.ScaleDamage( 0.1f );
-
-	// If attacker can't do at least the min required damage to us, don't take any damage from them
-	if ( info.GetDamage() < m_iMinHealthDmg )
-		return 0;
-
-	m_iHealth -= info.GetDamage();
-
-	if ( m_iHealth <= 0 )
-	{
-		m_iHealth = 0;
-		m_takedamage = DAMAGE_NO;
-
-		RemoveFlag( FL_NPC ); // why are they set in the first place???
-
-		//FIXME: This needs to throw a ragdoll gib or something other than animating the retraction -- jdw
-
-		ExplosionCreate( GetAbsOrigin(), GetLocalAngles(), this, 100, 100, false );
-		SetThink( &CNPC_SecurityCamera::DeathThink );
-
-		m_OnDamaged.FireOutput( info.GetInflictor(), this );
-
-		SetNextThink( gpGlobals->curtime + 0.1f );
-
-		return 0;
-	}
-
-	return 1;
+	return 0;
 }
 
 //-----------------------------------------------------------------------------
