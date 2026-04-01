@@ -10,7 +10,7 @@
 
 	GameData	"bin/portal_joke.fgd"
 
-	icon		"resource/icon1"
+	icon		"resource/icon"
 
 	FileSystem
 	{
